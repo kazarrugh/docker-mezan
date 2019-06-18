@@ -1,0 +1,53 @@
+version: '3'
+networks:
+    default:
+services:
+    
+    php:
+        image: nanoninja/php-fpm:${PHP_VERSION}
+        container_name: php
+        restart: always
+        volumes:
+            - "./etc/php/php.ini:/usr/local/etc/php/conf.d/php.ini"
+            - "./web:/var/www/html"
+    
+    myadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: phpmyadmin
+        ports:
+            - "8001:80"
+        environment:
+            - PMA_ARBITRARY=1
+            - PMA_HOST=${MYSQL_HOST}
+        restart: always
+        depends_on:
+            - mysqldb
+    mysqldb:
+        image: mariadb:${MYSQL_VERSION}
+        container_name: ${MYSQL_HOST}
+        restart: always
+        env_file:
+            - ".env"
+        environment:
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - MYSQL_USER=${MYSQL_USER}
+            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+            - TZ=${SYSTEM_TIMEZONE}
+        ports:
+            - "3306:3306"
+        expose:
+            # Opens port 3306 on the container
+            - '3306'    
+        volumes:
+            #- "./data/db/mysql:/var/lib/mysql"
+            #- "./etc/mysql.sh:/docker-entrypoint-initdb.d/mysql.sh"
+            - "./etc/mysql:/docker-entrypoint-initdb.d"
+        networks:
+            - default
+        stdin_open: true
+        tty: true
+        #command: sh -c "mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci"    
+        #command: sh -c "mysql -uroot -p$MYSQL_ROOT_PASSWORD < etc/mezan_defaultdb"    
+        command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
+    
